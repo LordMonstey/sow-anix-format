@@ -14,6 +14,7 @@ This repository contains **no game data**.
 | `README.md` | the specification (below) |
 | `reference/anix.py` | reader + decoders (AQ03, SQ03, SV01, UATR, STRI), engine-exact NaN check, encoders for packed quaternions and UATR |
 | `tests/test_codecs.py` | synthetic tests (no game files) |
+| `docs/ida/` | annotated decompiler excerpts backing the key rules (packed quaternion decode, NaN assert, nlerp) |
 
 ```bash
 pip install numpy
@@ -262,7 +263,7 @@ the three stored components keep their x, y, z, w order around the omitted one
 
 Encoder: omit the component with the largest magnitude, flip the quaternion's sign so that component is positive, then quantise the other three.
 
-> **Crash rule.** The engine decodes **all three slots of every word, including unused padding slots**, without clamping, and asserts that no value is NaN. When the track count is not a multiple of 3, fill the spare slots with the native identity filler `a = b = c = 4095, metadata 0`. A zeroed slot gives `1 - 1.5 < 0`, so `sqrt` returns NaN and the game crashes with `EvaluateBlockAQ03 decoded NAN`.
+> **Crash rule** ([IDA evidence](docs/ida/README.md#1-packed-quaternion-decode-and-the-nan-assert-0x1402d21b0-sq03-evaluator)). The engine decodes **all three slots of every word, including unused padding slots**, without clamping, and asserts that no value is NaN. When the track count is not a multiple of 3, fill the spare slots with the native identity filler `a = b = c = 4095, metadata 0`. A zeroed slot gives `1 - 1.5 < 0`, so `sqrt` returns NaN and the game crashes with `EvaluateBlockAQ03 decoded NAN`.
 
 ### 5.2 SQ03 (static rotations)
 
@@ -285,7 +286,7 @@ The key times are independent of the LITH table and need not be uniform.
 1. Clamp the time to the key range.
 2. Take the bracketing keys.
 3. Flip the upper key if `dot < 0` (shortest path).
-4. Linearly interpolate, then normalise (**nlerp**, not slerp).
+4. Linearly interpolate, then normalise (**nlerp**, not slerp; [IDA evidence](docs/ida/README.md#2-quaternion-normalisation-the-nlerp-0x1407fe69c)).
 
 ### 5.4 SV01 (static vectors)
 
