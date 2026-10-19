@@ -265,6 +265,10 @@ Encoder: omit the component with the largest magnitude, flip the quaternion's si
 
 > **Crash rule** ([IDA evidence](docs/ida/README.md#1-packed-quaternion-decode-and-the-nan-assert-0x1402d21b0-sq03-evaluator)). The engine decodes **all three slots of every word, including unused padding slots**, without clamping, and asserts that no value is NaN. When the track count is not a multiple of 3, fill the spare slots with the native identity filler `a = b = c = 4095, metadata 0`. A zeroed slot gives `1 - 1.5 < 0`, so `sqrt` returns NaN and the game crashes with `EvaluateBlockAQ03 decoded NAN`.
 
+**Engine evidence** (SQ03 evaluator `0x1402D21B0`: the root without clamp, the omitted-lane masks, the sign table and the three NaN checks per word; annotated in [docs/ida](docs/ida/README.md)):
+
+![IDA: packed quaternion decode and NaN assert](docs/ida/sq03-packed-row-decode.png)
+
 ### 5.2 SQ03 (static rotations)
 
 One packed row of `ceil(T / 3) * 16` bytes for `T` tracks. It is constant over the segment.
@@ -287,6 +291,10 @@ The key times are independent of the LITH table and need not be uniform.
 2. Take the bracketing keys.
 3. Flip the upper key if `dot < 0` (shortest path).
 4. Linearly interpolate, then normalise (**nlerp**, not slerp; [IDA evidence](docs/ida/README.md#2-quaternion-normalisation-the-nlerp-0x1407fe69c)).
+
+**Engine evidence** (normalisation `0x1407FE69C` used by the nlerp; annotated in [docs/ida](docs/ida/README.md)):
+
+![IDA: quaternion normalisation](docs/ida/quaternion-normalize.png)
 
 ### 5.4 SV01 (static vectors)
 
